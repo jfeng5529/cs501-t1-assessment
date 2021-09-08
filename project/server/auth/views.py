@@ -5,6 +5,15 @@ from project.server import bcrypt, db
 from project.server.models import User
 
 auth_blueprint = Blueprint('auth', __name__)
+user_blueprint = Blueprint('user', __name__)
+
+class UserAPI(MethodView):
+    def get(self):
+        users = []
+        responseObject = User.query.all()
+        for user in responseObject:
+            users.append({"email":user.email, "id":user.id, "admin":user.admin, "registered on":user.registered_on})
+        return make_response(jsonify(users)), 201
 
 class RegisterAPI(MethodView):
     """
@@ -38,10 +47,11 @@ class RegisterAPI(MethodView):
                 responseObject = {
                     'status': 'success',
                     'message': 'Successfully registered.',
-                    'auth_token': auth_token.decode()
+                    'auth_token': auth_token
                 }
                 return make_response(jsonify(responseObject)), 201
             except Exception as e:
+                print(e)
                 responseObject = {
                     'status': 'fail',
                     'message': 'Some error occurred. Please try again.'
@@ -57,10 +67,16 @@ class RegisterAPI(MethodView):
 
 # define the API resources
 registration_view = RegisterAPI.as_view('register_api')
+user_view = UserAPI.as_view('user_api')
 
 # add Rules for API Endpoints
 auth_blueprint.add_url_rule(
     '/auth/register',
     view_func=registration_view,
     methods=['POST', 'GET']
+)
+user_blueprint.add_url_rule(
+    '/users/index',
+    view_func=user_view,
+    methods=['GET']
 )
